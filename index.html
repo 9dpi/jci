@@ -4,181 +4,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JCI Standard Demo</title>
+    <title>Mô hình chuẩn JCI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #f8fafc;
-            --text-color: #1e293b;
-            --card-bg: #ffffff;
-            --primary: #2563eb;
-        }
-
-        .dark {
-            --bg-color: #0f172a;
-            --text-color: #f1f5f9;
-            --card-bg: #1e293b;
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --card: #1e293b;
             --primary: #3b82f6;
+            --accent: #facc15;
+            /* Màu vàng chuẩn JCI */
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg);
+            color: var(--text);
             height: 100vh;
             overflow: hidden;
-            transition: all 0.3s ease;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Tối ưu vùng hiển thị SVG */
-        #hospital-frame {
-            height: calc(100vh - 140px);
+        header {
+            height: 70px;
+            background-color: var(--card);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            position: relative;
+            padding: 0 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 50;
         }
 
-        #layout-container {
-            width: 100%;
-            height: 100%;
+        .header-left {
+            flex: 1;
+        }
+
+        .header-center {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            /* Tăng nhẹ độ rộng menu trái */
+            height: calc(100vh - 70px);
+        }
+
+        .floor-nav {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .floor-btn {
+            padding: 6px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+        }
+
+        .floor-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Menu bên trái */
+        #info-panel {
+            background: var(--card);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Style cho Accordion JCI */
+        .jci-item {
+            margin-bottom: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+        }
+
+        .jci-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .jci-header:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .jci-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .jci-content div {
+            padding: 15px;
+            color: #cbd5e1;
+        }
+
+        .jci-item.active .jci-content {
+            max-height: 500px;
+        }
+
+        .jci-item.active .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        /* Layout bên phải */
+        #hospital-frame {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0b1120;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        #hospital-map {
+            max-width: 100%;
+            max-height: calc(100vh - 120px);
+            display: block;
             object-fit: contain;
         }
 
-        /* Modal Info */
-        #info-panel {
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #info-panel.active {
-            transform: translateX(0);
-        }
-
-        /* Hiệu ứng cho SVG ID khi được gắn tương tác */
-        .interactive-area {
+        .hotspot {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background-color: #ef4444;
+            border-radius: 50%;
             cursor: pointer;
-            transition: filter 0.3s;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
         }
 
-        .interactive-area:hover {
-            filter: drop-shadow(0 0 8px var(--primary));
-            brightness: 1.2;
+        .hotspot::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #ef4444;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            top: 0;
+            left: 0;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .hotspot-label {
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .guide-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
 
-<body class="light">
+<body class="dark">
 
-    <header class="p-4 shadow-md flex justify-between items-center" style="background-color: var(--card-bg);">
-        <div>
-            <h1 class="text-xl font-bold text-blue-600">JCI Standard</h1>
-            <p class="text-xs opacity-70">Mô hình JCI trong quản lý bệnh viện</p>
+    <header>
+        <div class="header-left">
+            <h1 class="text-xl font-bold uppercase leading-none" style="color: var(--accent);">Mô hình chuẩn JCI</h1>
+            <p class="text-[10px] opacity-60">Mô hình JCI trong quản lý bệnh viện</p>
         </div>
 
-        <div class="flex items-center gap-4">
-            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-                <i id="theme-icon" class="fas fa-moon"></i>
-            </button>
-            <div class="text-right border-l pl-4 hidden sm:block">
-                <p class="text-sm font-semibold">Vũ Quang Cường</p>
-                <p class="text-xs text-blue-500">0912580018</p>
+        <div class="header-center">
+            <nav class="floor-nav">
+                <div class="floor-btn" onclick="changeFloor('basement')" id="btn-basement">Tầng hầm</div>
+                <div class="floor-btn active" onclick="changeFloor('floor1')" id="btn-floor1">Tầng 1</div>
+                <div class="floor-btn" onclick="changeFloor('floor2')" id="btn-floor2">Tầng 2</div>
+            </nav>
+        </div>
+
+        <div class="header-right">
+            <div class="text-right border-l border-gray-700 pl-4">
+                <p class="text-sm font-bold text-slate-200">Vũ Quang Cường</p>
+                <p class="text-[11px] text-blue-400 font-medium">0912580018</p>
             </div>
         </div>
     </header>
 
-    <main id="hospital-frame" class="relative p-2">
-        <object id="layout-svg" data="https://9dpi.github.io/jci/layout.svg" type="image/svg+xml" class="w-full h-full">
-        </object>
-
-        <div class="absolute bottom-4 left-4 bg-white/80 dark:bg-black/80 p-2 rounded text-[10px]">
-            Chạm vào các phòng để xem tiêu chuẩn JCI
-        </div>
-    </main>
-
-    <div id="info-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 shadow-2xl z-50 p-6"
-        style="background-color: var(--card-bg);">
-        <button onclick="closePanel()" class="absolute top-4 right-4 text-xl">&times;</button>
-
-        <div id="panel-content" class="mt-8">
-            <h2 id="room-title" class="text-2xl font-bold text-blue-600 mb-4 font-sans">Chọn một khu vực</h2>
-            <div id="jci-details" class="space-y-4 overflow-y-auto max-h-[80vh]">
-                <p class="opacity-60 italic">Đang tải dữ liệu tiêu chuẩn từ Google Sheets...</p>
+    <div class="main-container">
+        <aside id="info-panel">
+            <div id="welcome-msg">
+                <h2 class="text-lg font-bold mb-2" style="color: var(--accent);">Thông tin JCI</h2>
+                <p class="text-sm opacity-60 italic">Bấm vào các điểm trên sơ đồ để xem tiêu chuẩn.</p>
             </div>
-        </div>
+            <div id="panel-data" class="hidden">
+                <h2 id="room-title"
+                    class="text-xl font-bold text-blue-400 border-b border-gray-700 pb-2 mb-4 uppercase"></h2>
+                <div id="jci-accordion" class="space-y-2">
+                </div>
+            </div>
+        </aside>
+
+        <main id="hospital-frame">
+            <div id="layout-wrapper">
+                <img src="./images/layout_Tang1.png" id="hospital-map" alt="Hospital Layout">
+                <div id="hotspot-container"></div>
+            </div>
+            <div class="guide-box"><i class="fas fa-hand-pointer mr-2 animate-bounce text-blue-400"></i> Click vào các
+                điểm nhấp nháy</div>
+        </main>
     </div>
 
     <script>
-        // 1. Toggle Theme
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            if (body.classList.contains('light')) {
-                body.classList.replace('light', 'dark');
-                icon.classList.replace('fa-moon', 'fa-sun');
-            } else {
-                body.classList.replace('dark', 'light');
-                icon.classList.replace('fa-sun', 'fa-moon');
+        const floorData = {
+            'basement': { image: './images/layout_TangHam.png', hotspots: [{ id: 'Parking', label: 'Bãi xe', top: '45%', left: '55%' }] },
+            'floor1': {
+                image: './images/layout_Tang1.png', hotspots: [
+                    { id: 'Emergency', label: 'Cấp cứu', top: '48%', left: '42%' },
+                    { id: 'Reception', label: 'Lễ tân', top: '75%', left: '62%' }
+                ]
+            },
+            'floor2': { image: './images/layout_Tang2.png', hotspots: [{ id: 'PatientRoom', label: 'Phòng bệnh', top: '40%', left: '60%' }] }
+        };
+
+        const jciDatabase = {
+            "Emergency": {
+                title: "KHOA CẤP CỨU",
+                standards: [
+                    { code: "IPSG.1", name: "Xác định đúng người bệnh", content: "Sử dụng ít nhất 2 yếu tố định danh (Họ tên, Ngày sinh). Không sử dụng số phòng bệnh." },
+                    { code: "ACC.1", name: "Sàng lọc bệnh nhân", content: "Thực hiện phân loại ưu tiên cấp cứu (Triage) trong vòng 5 phút sau khi tiếp nhận." }
+                ]
+            },
+            "Reception": {
+                title: "KHU VỰC LỄ TÂN",
+                standards: [
+                    { code: "PFR.1", name: "Quyền người bệnh", content: "Thông tin về quyền và trách nhiệm người bệnh được niêm yết công khai và giải thích rõ ràng." }
+                ]
+            },
+            "PatientRoom": {
+                title: "PHÒNG BỆNH NỘI TRÚ",
+                standards: [
+                    { code: "IPSG.6", name: "Giảm nguy cơ té ngã", content: "Đánh giá nguy cơ té ngã Morse khi nhập viện và mỗi ca trực. Sử dụng biển báo phòng ngừa phù hợp." },
+                    { code: "MMU.1", name: "Quản lý thuốc", content: "Thuốc được bảo quản đúng nhiệt độ, thuốc High Alert được dán nhãn cảnh báo rõ ràng." }
+                ]
             }
+        };
+
+        function changeFloor(floorKey) {
+            const floor = floorData[floorKey];
+            document.querySelectorAll('.floor-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${floorKey}`).classList.add('active');
+            document.getElementById('hospital-map').src = floor.image;
+            renderHotspots(floor.hotspots);
+            document.getElementById('welcome-msg').classList.remove('hidden');
+            document.getElementById('panel-data').classList.add('hidden');
         }
 
-        // 2. Load Dữ liệu Google Sheets
-        // Lưu ý: Bạn cần thay URL này bằng link Google Sheet đã Publish (CSV) của bạn
-        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_ID/pub?output=csv';
-        let jciDatabase = {};
-
-        async function fetchSheetData() {
-            try {
-                // Giả lập dữ liệu nếu chưa có sheet thật
-                jciDatabase = {
-                    "room-1": { title: "Khoa Cấp Cứu", standards: ["IPSG.2: Truyền thông", "ACC.1: Sàng lọc"] },
-                    "room-2": { title: "Phòng Mổ", standards: ["ASC.3: An toàn phẫu thuật", "PCI.5: Kiểm soát nhiễm khuẩn"] },
-                    "lobby": { title: "Sảnh Lễ Tân", standards: ["PFR.1: Quyền người bệnh", "ACC.1: Đăng ký"] }
-                };
-            } catch (e) { console.error("Lỗi tải Sheet:", e); }
-        }
-
-        // 3. Tương tác với SVG
-        const svgObject = document.getElementById('layout-svg');
-
-        svgObject.addEventListener('load', () => {
-            const svgDoc = svgObject.contentDocument;
-
-            // Tìm tất cả các nhóm có ID
-            const groups = svgDoc.querySelectorAll('g');
-            groups.forEach(group => {
-                if (group.id) {
-                    group.classList.add('interactive-area');
-                    group.addEventListener('click', () => showInfo(group.id));
-                }
+        function renderHotspots(hotspots) {
+            const container = document.getElementById('hotspot-container');
+            container.innerHTML = '';
+            hotspots.forEach(spot => {
+                const div = document.createElement('div');
+                div.className = 'hotspot';
+                div.style.top = spot.top;
+                div.style.left = spot.left;
+                div.onclick = (e) => { e.stopPropagation(); showInfo(spot.id); };
+                div.innerHTML = `<div class="hotspot-label">${spot.label}</div>`;
+                container.appendChild(div);
             });
-        });
+        }
 
-        function showInfo(roomId) {
-            const panel = document.getElementById('info-panel');
-            const title = document.getElementById('room-title');
-            const details = document.getElementById('jci-details');
+        function showInfo(id) {
+            const data = jciDatabase[id];
+            if (!data) return;
+            document.getElementById('welcome-msg').classList.add('hidden');
+            const panelData = document.getElementById('panel-data');
+            panelData.classList.remove('hidden');
+            document.getElementById('room-title').innerText = data.title;
 
-            const data = jciDatabase[roomId] || {
-                title: "Khu vực: " + roomId,
-                standards: ["Chưa có dữ liệu JCI cho mã này."]
-            };
-
-            title.innerText = data.title;
-            details.innerHTML = data.standards.map(s => `
-                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded">
-                    <p class="text-sm font-medium">${s}</p>
+            const accordion = document.getElementById('jci-accordion');
+            accordion.innerHTML = data.standards.map((s, index) => `
+                <div class="jci-item" id="item-${index}">
+                    <div class="jci-header" onclick="toggleAccordion('item-${index}')">
+                        <span>${s.code}: ${s.name}</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                    </div>
+                    <div class="jci-content">
+                        <div>${s.content}</div>
+                    </div>
                 </div>
             `).join('');
-
-            panel.classList.add('active');
         }
 
-        function closePanel() {
-            document.getElementById('info-panel').classList.remove('active');
+        function toggleAccordion(id) {
+            const item = document.getElementById(id);
+            const isActive = item.classList.contains('active');
+            // Đóng tất cả các item khác nếu muốn (Optional)
+            document.querySelectorAll('.jci-item').forEach(el => el.classList.remove('active'));
+            if (!isActive) item.classList.add('active');
         }
 
-        window.onload = fetchSheetData;
+        window.onload = () => renderHotspots(floorData.floor1.hotspots);
     </script>
 </body>
 
