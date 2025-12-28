@@ -14,7 +14,6 @@
             --card: #1e293b;
             --primary: #3b82f6;
             --accent: #facc15;
-            /* Màu vàng chuẩn JCI */
         }
 
         body {
@@ -93,7 +92,6 @@
             overflow-y: auto;
         }
 
-        /* Style cho Accordion JCI */
         .jci-item {
             margin-bottom: 10px;
             border-radius: 8px;
@@ -131,7 +129,7 @@
         }
 
         .jci-item.active .jci-content {
-            max-height: 500px;
+            max-height: 1000px;
         }
 
         .jci-item.active .fa-chevron-down {
@@ -225,7 +223,6 @@
             <h1 class="text-xl font-bold uppercase leading-none" style="color: var(--accent);">Mô hình chuẩn JCI</h1>
             <p class="text-[10px] opacity-60">Mô hình JCI trong quản lý bệnh viện</p>
         </div>
-
         <div class="header-center">
             <nav class="floor-nav">
                 <div class="floor-btn" onclick="changeFloor('basement')" id="btn-basement">Tầng hầm</div>
@@ -233,7 +230,6 @@
                 <div class="floor-btn" onclick="changeFloor('floor2')" id="btn-floor2">Tầng 2</div>
             </nav>
         </div>
-
         <div class="header-right">
             <div class="text-right border-l border-gray-700 pl-4">
                 <p class="text-sm font-bold text-slate-200">Vũ Quang Cường</p>
@@ -254,7 +250,6 @@
                 <div id="jci-accordion" class="space-y-2"></div>
             </div>
         </aside>
-
         <main id="hospital-frame">
             <div id="layout-wrapper">
                 <img src="./images/layout_Tang1.png" id="hospital-map" alt="Hospital Layout">
@@ -266,11 +261,11 @@
     </div>
 
     <script>
-        // CẤU HÌNH LINK CSV TỪ GOOGLE SHEETS
+        // LINK CSV CHUYỂN ĐỔI TỪ GOOGLE SHEET CỦA BẠN
         const SHEET_URLS = {
-            'basement': 'CHÈN_LINK_CSV_TANG_HAM_TAI_DAY',
-            'floor1': 'CHÈN_LINK_CSV_TANG_1_TAI_DAY',
-            'floor2': 'CHÈN_LINK_CSV_TANG_2_TAI_DAY'
+            'basement': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=0&output=csv',
+            'floor1': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=1860361468&output=csv',
+            'floor2': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=1191021628&output=csv'
         };
 
         const floorData = {
@@ -288,7 +283,6 @@
 
         async function loadAllSheets() {
             for (const [key, url] of Object.entries(SHEET_URLS)) {
-                if (!url.startsWith('http')) continue;
                 try {
                     const response = await fetch(url);
                     const csvText = await response.text();
@@ -305,7 +299,7 @@
                             });
                         }
                     });
-                } catch (e) { console.error(`Lỗi tầng ${key}:`, e); }
+                } catch (e) { console.error(`Lỗi tải dữ liệu tầng ${key}:`, e); }
             }
         }
 
