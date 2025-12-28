@@ -223,6 +223,7 @@
             <h1 class="text-xl font-bold uppercase leading-none" style="color: var(--accent);">Mô hình chuẩn JCI</h1>
             <p class="text-[10px] opacity-60">Mô hình JCI trong quản lý bệnh viện</p>
         </div>
+
         <div class="header-center">
             <nav class="floor-nav">
                 <div class="floor-btn" onclick="changeFloor('basement')" id="btn-basement">Tầng hầm</div>
@@ -230,6 +231,7 @@
                 <div class="floor-btn" onclick="changeFloor('floor2')" id="btn-floor2">Tầng 2</div>
             </nav>
         </div>
+
         <div class="header-right">
             <div class="text-right border-l border-gray-700 pl-4">
                 <p class="text-sm font-bold text-slate-200">Vũ Quang Cường</p>
@@ -250,6 +252,7 @@
                 <div id="jci-accordion" class="space-y-2"></div>
             </div>
         </aside>
+
         <main id="hospital-frame">
             <div id="layout-wrapper">
                 <img src="./images/layout_Tang1.png" id="hospital-map" alt="Hospital Layout">
@@ -261,32 +264,23 @@
     </div>
 
     <script>
-        // LINK CSV CHUYỂN ĐỔI TỪ GOOGLE SHEET CỦA BẠN
+        // Cấu hình URL Google Sheets
         const SHEET_URLS = {
             'basement': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=0&output=csv',
             'floor1': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=1860361468&output=csv',
             'floor2': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGBPqMRgIYC7m3905vg5MIWNDvrrNd_Jeg6rGhJ8NW8TcEgKtBTeDBZp-FMV2t36e-qqphNcfDZe-0/pub?gid=1191021628&output=csv'
         };
 
-        const floorData = {
-            'basement': { image: './images/layout_TangHam.png', hotspots: [{ id: 'Parking', label: 'Bãi xe', top: '45%', left: '55%' }] },
-            'floor1': {
-                image: './images/layout_Tang1.png', hotspots: [
-                    { id: 'Emergency', label: 'Cấp cứu', top: '48%', left: '42%' },
-                    { id: 'Reception', label: 'Lễ tân', top: '75%', left: '62%' }
-                ]
-            },
-            'floor2': { image: './images/layout_Tang2.png', hotspots: [{ id: 'PatientRoom', label: 'Phòng bệnh', top: '40%', left: '60%' }] }
-        };
-
         let fullJciDatabase = {};
+        let dynamicHotspots = { 'basement': [], 'floor1': [], 'floor2': [] };
 
-        async function loadAllSheets() {
+        async function loadAllData() {
             for (const [key, url] of Object.entries(SHEET_URLS)) {
                 try {
                     const response = await fetch(url);
                     const csvText = await response.text();
                     const rows = csvText.split('\n').slice(1);
+
                     rows.forEach(row => {
                         const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         if (cols.length >= 4) {
@@ -297,18 +291,28 @@
                                 name: cols[2].trim(),
                                 content: cols[3].trim().replace(/^"|"$/g, '')
                             });
+
+                            if (cols[4] && cols[5]) {
+                                if (!dynamicHotspots[key].find(h => h.id === roomID)) {
+                                    dynamicHotspots[key].push({
+                                        id: roomID, label: roomID,
+                                        top: cols[5].trim() + '%', left: cols[4].trim() + '%'
+                                    });
+                                }
+                            }
                         }
                     });
-                } catch (e) { console.error(`Lỗi tải dữ liệu tầng ${key}:`, e); }
+                } catch (e) { console.error(`Lỗi nạp tầng ${key}:`, e); }
             }
         }
 
         function changeFloor(floorKey) {
-            const floor = floorData[floorKey];
             document.querySelectorAll('.floor-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${floorKey}`).classList.add('active');
-            document.getElementById('hospital-map').src = floor.image;
-            renderHotspots(floor.hotspots);
+            const mapImg = document.getElementById('hospital-map');
+            const imgName = floorKey === 'basement' ? 'TangHam' : (floorKey === 'floor1' ? 'Tang1' : 'Tang2');
+            mapImg.src = `./images/layout_${imgName}.png`;
+            renderHotspots(dynamicHotspots[floorKey]);
             document.getElementById('welcome-msg').classList.remove('hidden');
             document.getElementById('panel-data').classList.add('hidden');
         }
@@ -351,9 +355,22 @@
             if (!isActive) item.classList.add('active');
         }
 
+        // CHẾ ĐỘ ADMIN ẨN ĐỂ LẤY TỌA ĐỘ
+        // Chỉ hoạt động khi bạn thêm "?admin=1" vào cuối URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === '1') {
+            document.getElementById('hospital-map').style.cursor = 'crosshair';
+            document.getElementById('hospital-map').addEventListener('click', function (e) {
+                const rect = e.target.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+                const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+                prompt("Dán vào Cột E (X) và F (Y) trong Sheet:", `${x}, ${y}`);
+            });
+        }
+
         window.onload = async () => {
-            await loadAllSheets();
-            renderHotspots(floorData.floor1.hotspots);
+            await loadAllData();
+            renderHotspots(dynamicHotspots.floor1);
         };
     </script>
 </body>
