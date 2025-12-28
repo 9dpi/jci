@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JCI Standard Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+        }
+
+        .dark {
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Tối ưu vùng hiển thị SVG */
+        #hospital-frame {
+            height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #layout-container {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Modal Info */
+        #info-panel {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #info-panel.active {
+            transform: translateX(0);
+        }
+
+        /* Hiệu ứng cho SVG ID khi được gắn tương tác */
+        .interactive-area {
+            cursor: pointer;
+            transition: filter 0.3s;
+        }
+
+        .interactive-area:hover {
+            filter: drop-shadow(0 0 8px var(--primary));
+            brightness: 1.2;
+        }
+    </style>
+</head>
+
+<body class="light">
+
+    <header class="p-4 shadow-md flex justify-between items-center" style="background-color: var(--card-bg);">
+        <div>
+            <h1 class="text-xl font-bold text-blue-600">JCI Standard</h1>
+            <p class="text-xs opacity-70">Mô hình JCI trong quản lý bệnh viện</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <div class="text-right border-l pl-4 hidden sm:block">
+                <p class="text-sm font-semibold">Vũ Quang Cường</p>
+                <p class="text-xs text-blue-500">0912580018</p>
+            </div>
+        </div>
+    </header>
+
+    <main id="hospital-frame" class="relative p-2">
+        <object id="layout-svg" data="https://9dpi.github.io/jci/layout.svg" type="image/svg+xml" class="w-full h-full">
+        </object>
+
+        <div class="absolute bottom-4 left-4 bg-white/80 dark:bg-black/80 p-2 rounded text-[10px]">
+            Chạm vào các phòng để xem tiêu chuẩn JCI
+        </div>
+    </main>
+
+    <div id="info-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 shadow-2xl z-50 p-6"
+        style="background-color: var(--card-bg);">
+        <button onclick="closePanel()" class="absolute top-4 right-4 text-xl">&times;</button>
+
+        <div id="panel-content" class="mt-8">
+            <h2 id="room-title" class="text-2xl font-bold text-blue-600 mb-4 font-sans">Chọn một khu vực</h2>
+            <div id="jci-details" class="space-y-4 overflow-y-auto max-h-[80vh]">
+                <p class="opacity-60 italic">Đang tải dữ liệu tiêu chuẩn từ Google Sheets...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Toggle Theme
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            if (body.classList.contains('light')) {
+                body.classList.replace('light', 'dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                body.classList.replace('dark', 'light');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+        }
+
+        // 2. Load Dữ liệu Google Sheets
+        // Lưu ý: Bạn cần thay URL này bằng link Google Sheet đã Publish (CSV) của bạn
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_ID/pub?output=csv';
+        let jciDatabase = {};
+
+        async function fetchSheetData() {
+            try {
+                // Giả lập dữ liệu nếu chưa có sheet thật
+                jciDatabase = {
+                    "room-1": { title: "Khoa Cấp Cứu", standards: ["IPSG.2: Truyền thông", "ACC.1: Sàng lọc"] },
+                    "room-2": { title: "Phòng Mổ", standards: ["ASC.3: An toàn phẫu thuật", "PCI.5: Kiểm soát nhiễm khuẩn"] },
+                    "lobby": { title: "Sảnh Lễ Tân", standards: ["PFR.1: Quyền người bệnh", "ACC.1: Đăng ký"] }
+                };
+            } catch (e) { console.error("Lỗi tải Sheet:", e); }
+        }
+
+        // 3. Tương tác với SVG
+        const svgObject = document.getElementById('layout-svg');
+
+        svgObject.addEventListener('load', () => {
+            const svgDoc = svgObject.contentDocument;
+
+            // Tìm tất cả các nhóm có ID
+            const groups = svgDoc.querySelectorAll('g');
+            groups.forEach(group => {
+                if (group.id) {
+                    group.classList.add('interactive-area');
+                    group.addEventListener('click', () => showInfo(group.id));
+                }
+            });
+        });
+
+        function showInfo(roomId) {
+            const panel = document.getElementById('info-panel');
+            const title = document.getElementById('room-title');
+            const details = document.getElementById('jci-details');
+
+            const data = jciDatabase[roomId] || {
+                title: "Khu vực: " + roomId,
+                standards: ["Chưa có dữ liệu JCI cho mã này."]
+            };
+
+            title.innerText = data.title;
+            details.innerHTML = data.standards.map(s => `
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded">
+                    <p class="text-sm font-medium">${s}</p>
+                </div>
+            `).join('');
+
+            panel.classList.add('active');
+        }
+
+        function closePanel() {
+            document.getElementById('info-panel').classList.remove('active');
+        }
+
+        window.onload = fetchSheetData;
+    </script>
+</body>
+
+</html>
